@@ -1,16 +1,71 @@
-# This is a sample Python script.
+import time
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+import logging
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+########################
+# logging configurations
+########################
+now = datetime.now()
 
+logFolder = os.path.join(os.path.dirname(__file__), "logs")
+if not os.path.exists(logFolder):
+    os.makedirs(logFolder)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+programTimeFormat = now.strftime('%Y-%m-%d-%H-%M-%S')
+logFileName = os.path.join(logFolder, f"{programTimeFormat}.log")
+logging.basicConfig(
+    filename=logFileName,
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d-%H-%M-%S',
+    level=logging.INFO,
+    encoding="UTF-8"
+)
+########################
+# reading data from source excel file
+########################
+sourceExcelFileLocation = os.path.join(os.path.dirname(__file__), "source/source.xlsx")
+df = pd.read_excel(sourceExcelFileLocation)
+########################
+# configs for chrome driver
+########################
+sleepTime = df.loc[0, 'sleep_time']
+programWholeSleepTime = df.loc[0, 'program_sleep_time']
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--log-level=0")
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+######################
+# beginning to crawl from excell file
+######################
+while True:
+    print('program started ')
+    for i in df.itertuples():
+        try:
+            urlToCLick = i[df.columns.get_loc('urls') + 1]
+            with requests.Session() as s:
+                driver.get(urlToCLick)
+                successfulResponseMessage = f"""
+                successfully visited {urlToCLick} 
+                sleeping for {sleepTime} seconds
+                """
+                print(successfulResponseMessage)
+                logging.info(successfulResponseMessage)
+                time.sleep(sleepTime)
+        except Exception as e:
+            print(f"error occurred in program with message: {e}")
+            logging.error("Exception occurred", exc_info=True)
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    nextClickTime = now + timedelta(minutes=programWholeSleepTime)
+    print(f"""
+            program clicked all the links sleeping for {programWholeSleepTime} minutes 
+            and next run in {nextClickTime}
+        """)
+    time.sleep(programWholeSleepTime * 60)
