@@ -13,9 +13,8 @@ import logging
 # logging configurations
 ########################
 now = datetime.now()
-
-logFolder = os.path.join(os.path.dirname(__file__), "logs")
-if not os.path.exists(logFolder):
+logFolder = 'logs'
+if not os.path.exists('logs'):
     os.makedirs(logFolder)
 
 programTimeFormat = now.strftime('%Y-%m-%d-%H-%M-%S')
@@ -31,17 +30,16 @@ logging.basicConfig(
 ########################
 # reading data from source excel file
 ########################
-sourceExcelFileLocation = os.path.join(os.path.dirname(__file__), "source/source.xlsx")
-df = pd.read_excel(sourceExcelFileLocation)
+df = pd.read_excel("source/source.xlsx")
 ########################
 # configs for chrome driver
 ########################
 sleepTime = df.loc[0, 'sleep_time']
 programWholeSleepTime = df.loc[0, 'program_sleep_time']
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--log-level=0")
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+chromeOptions = Options()
+chromeOptions.add_argument("--headless")
+chromeOptions.add_argument("--log-level=0")
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=chromeOptions)
 ######################
 # beginning to crawl from excell file
 ######################
